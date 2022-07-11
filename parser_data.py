@@ -27,6 +27,7 @@ def save_chroma(dataset_path, json_path, n_fft=2048, hop_length=512):
         "labels": [],
         "chroma": []
     }
+    count_label = 0 
 
     for i, (dirpath, dirnames, filenames) in enumerate(os.walk(dataset_path)):
 
@@ -36,7 +37,7 @@ def save_chroma(dataset_path, json_path, n_fft=2048, hop_length=512):
             # save chord label (i.e., sub-folder name) in the mapping
             label = generateLabel(dirpath)
             data["mapping"].append(label)
-            print("\nProcessing: {}".format(label))
+            print("\nProcessing: {}\n Label Assign: {}\n".format(label, count_label))
 
             # process all audio files in chord sub-dir
             for f in filenames:
@@ -49,15 +50,20 @@ def save_chroma(dataset_path, json_path, n_fft=2048, hop_length=512):
                 chroma = librosa.feature.chroma_cens(y=signal, sr=sample_rate)
             
                 data["chroma"].append(chroma.tolist())
-                data["labels"].append(i-1)
+                data["labels"].append(count_label)
                 print("{}, file:{} shape:{}".format(label, record,chroma.shape))
+            count_label = count_label + 1 
 
     # save CHROMA to json file
     with open(json_path, "w") as fp:
         json.dump(data, fp, indent=4)
         
 def isWavDir(datapath):
-    return len(os.path.join(datapath, os.path.split(datapath)[1], '*.wav')) > 0
+    list_dir = os.listdir(datapath)
+    for x in list_dir:
+        if '.wav' in x :
+            return True
+    return False
 
 def generateLabel(datapath):
      dir_labels = datapath.split("\\")
