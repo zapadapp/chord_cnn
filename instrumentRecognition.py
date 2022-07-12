@@ -9,7 +9,7 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 
 
-FILE_PATH = "Data/Piano/Menor/DO/c_min_2_0.wav"
+FILE_PATH = "Data/Piano/Mayor/DO/C_maj_2_0.wav"
 DATASET_PATH = "Data"
 JSON_PATH = "data_chord.json"
 SAMPLE_RATE = 22050
@@ -42,13 +42,13 @@ signal, sample_rate = librosa.load(FILE_PATH, sr=SAMPLE_RATE)
 
 # extract Chroma
 chroma = librosa.feature.chroma_cens(y=signal, sr=sample_rate)
-newChroma = tf.reshape(chroma, [0, 12, 130])
-my_prediction = my_model.predict(newChroma)
-#print(len(my_prediction))
-plt.figure(figsize=(25, 10))
-librosa.display.specshow(chroma, 
-                         y_axis="chroma", 
-                         x_axis="time",
-                         sr=sample_rate)
-plt.colorbar(format="%+2.f")
-plt.show()
+chroma_reshape = tf.reshape(chroma, [ 1,12,130])
+my_prediction = my_model.predict(chroma_reshape)
+print(my_prediction)
+#plt.figure(figsize=(25, 10))
+#librosa.display.specshow(chroma, 
+#                         y_axis="chroma", 
+#                         x_axis="time",
+#                         sr=sample_rate)
+#plt.colorbar(format="%+2.f")
+#plt.show()
