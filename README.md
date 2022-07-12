@@ -13,9 +13,15 @@ INPUT: data_chords.json
 OUTPUT: modelo-entrenado.h5 y gráfica con el accuracy y testing. 
 
 ## Requirements
-Tensorflow: 	pip install Tensorflow
-Librosa: 	pip install Librosa
-Scipy: 		pip install scipy
-Numpy: 		pip install numpy
-Matplotlib:	pip install matplotlib
-Sklearn:	pip install sklearn
+*   Tensorflow: 	
+    *   pip install Tensorflow
+*   Librosa: 	
+    *   pip install Librosa
+*   Scipy:
+    *	pip install scipy
+*   Numpy:
+    *	pip install numpy
+*   Matplotlib:	
+    *   pip install matplotlib
+*   Sklearn:
+    *	pip install sklearn
