@@ -16,6 +16,32 @@ SAMPLE_RATE = 22050
 TRACK_DURATION = 3 # measured in seconds
 n_fft = 2048
 hop_length = 512
+CATEGORIES = [
+    "Piano-Dim",
+    "Mayor-DO",
+    "Mayor-DOs",
+    "Mayor-FA",
+    "Mayor-LA",
+    "Mayor-MI",
+    "Mayor-MIb",
+    "Mayor-RE",
+    "Mayor-SI",
+    "Mayor-SIb",
+    "Mayor-SOL",
+    "Mayor-SOLs",
+    "Menor-DO",
+    "Menor-DOs",
+    "Menor-FA",
+    "Menor-FAs",
+    "Menor-LA",
+    "Menor-MI",
+    "Menor-MIb",
+    "Menor-RE",
+    "Menor-SI",
+    "Menor-SIb",
+    "Menor-SOL",
+    "Menor-SOLs"
+]
 
 def load_data(data_path):
     """Loads training dataset from json file.
@@ -45,6 +71,9 @@ chroma = librosa.feature.chroma_cens(y=signal, sr=sample_rate)
 chroma_reshape = tf.reshape(chroma, [ 1,12,130])
 my_prediction = my_model.predict(chroma_reshape)
 print(my_prediction)
+index = np.argmax(my_prediction)
+print("chord: " + CATEGORIES[index])
+
 #plt.figure(figsize=(25, 10))
 #librosa.display.specshow(chroma, 
 #                         y_axis="chroma", 
