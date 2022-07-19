@@ -42,6 +42,7 @@ CATEGORIES = [
     "Menor-SOL",
     "Menor-SOLs"
 ]
+<<<<<<< HEAD
 
 def correctShape(chroma_shape):
     return chroma_shape == 130
@@ -60,6 +61,8 @@ def normalizeShape(chroma_mat):
         chroma_mat= np.column_stack((chroma_mat,arreglo))  
         i = i +1 
     return chroma_mat
+=======
+>>>>>>> 4a9a08e9489b5951400515419c7a4b00e0926a66
 
 def load_data(data_path):
     """Loads training dataset from json file.
