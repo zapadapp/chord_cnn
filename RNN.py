@@ -56,13 +56,10 @@ if __name__ == "__main__":
 
     # load data
     X, y = load_data(DATA_PATH)
-
+    
     # create train/test split
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
-    print("AHORA IMPRIMO X")
-    print(X_train.shape)
-    print("AHORA IMPRIMO Y")
-    print (y_train)
+  
     # build network topology
     model = keras.Sequential([
 
