@@ -76,7 +76,9 @@ def generateLabel(datapath):
      dir_labels = datapath.split("\\")
      size_dir = len(dir_labels)
 
-     semantic_label = dir_labels[size_dir - 2] + "-"+ dir_labels[size_dir - 1]
+    # semantic_label = dir_labels[size_dir - 2] + "-"+ dir_labels[size_dir - 1]
+     semantic_label = dir_labels[size_dir - 1]
+    
      return semantic_label
 
 def correctShape(chroma_shape):

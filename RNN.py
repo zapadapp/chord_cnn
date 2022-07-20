@@ -79,7 +79,7 @@ if __name__ == "__main__":
         keras.layers.Dropout(0.3),
 
         # output layer
-        keras.layers.Dense(24, activation='softmax')
+        keras.layers.Dense(36, activation='softmax')
     ])
 
     # compile model
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     #print X_train Y_train
     
     # train model
-    history = model.fit(X_train, y_train, validation_data=(X_test, y_test), batch_size=32, epochs=40)
+    history = model.fit(X_train, y_train, validation_data=(X_test, y_test), batch_size=32, epochs=80)
 
     # plot accuracy and error as a function of the epochs
     plot_history(history)

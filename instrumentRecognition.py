@@ -9,7 +9,7 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 
 
-FILE_PATH = "Data/Piano/Mayor/LA/Piano_A4_1657928571.3672063.wav"
+FILE_PATH = "Data/Piano/E4/Piano_E4_1657927583.5572295.wav"
 DATASET_PATH = "Data"
 JSON_PATH = "data_chord.json"
 SAMPLE_RATE = 22050
@@ -17,32 +17,44 @@ TRACK_DURATION = 3 # measured in seconds
 n_fft = 2048
 hop_length = 512
 CATEGORIES = [
-    "Piano-Dim",
-    "Mayor-DO",
-    "Mayor-DOs",
-    "Mayor-FA",
-    "Mayor-LA",
-    "Mayor-MI",
-    "Mayor-MIb",
-    "Mayor-RE",
-    "Mayor-SI",
-    "Mayor-SIb",
-    "Mayor-SOL",
-    "Mayor-SOLs",
-    "Menor-DO",
-    "Menor-DOs",
-    "Menor-FA",
-    "Menor-FAs",
-    "Menor-LA",
-    "Menor-MI",
-    "Menor-MIb",
-    "Menor-RE",
-    "Menor-SI",
-    "Menor-SIb",
-    "Menor-SOL",
-    "Menor-SOLs"
+    "A#3",
+    "A#4",
+    "A#5",
+    "A3",
+    "A4",
+    "A5",
+    "B3",
+    "B4",
+    "B5",
+    "C#3",
+    "C#4",
+    "C#5",
+    "C3",
+    "C4",
+    "C5",
+    "D#3",
+    "D#4",
+    "D#5",
+    "D3",
+    "D4",
+    "D5",
+    "E3",
+    "E4",
+    "E5",
+    "F#3",
+    "F#4",
+    "F#5",
+    "F3",
+    "F4",
+    "F5",
+    "G#3",
+    "G#4",
+    "G#5",
+    "G3",
+    "G4",
+    "G5",
+
 ]
-<<<<<<< HEAD
 
 def correctShape(chroma_shape):
     return chroma_shape == 130
@@ -61,8 +73,6 @@ def normalizeShape(chroma_mat):
         chroma_mat= np.column_stack((chroma_mat,arreglo))  
         i = i +1 
     return chroma_mat
-=======
->>>>>>> 4a9a08e9489b5951400515419c7a4b00e0926a66
 
 def load_data(data_path):
     """Loads training dataset from json file.
@@ -91,7 +101,7 @@ signal, sample_rate = librosa.load(FILE_PATH, sr=SAMPLE_RATE)
 chroma = librosa.feature.chroma_cens(y=signal, sr=sample_rate)
 if not correctShape(chroma.shape[1]) :
    chroma = normalizeShape(chroma)
-   
+
 chroma_reshape = tf.reshape(chroma, [ 1,12,130])
 my_prediction = my_model.predict(chroma_reshape)
 print(my_prediction)
