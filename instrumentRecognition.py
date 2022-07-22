@@ -9,52 +9,19 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 
 
-FILE_PATH = "Data/Piano/E4/Piano_E4_1657927583.5572295.wav"
+FILE_PATH = "Predict\Piano_F4_1657927716.9162831.wav"
 DATASET_PATH = "Data"
 JSON_PATH = "data_chord.json"
 SAMPLE_RATE = 22050
 TRACK_DURATION = 3 # measured in seconds
 n_fft = 2048
 hop_length = 512
-CATEGORIES = [
-    "A#3",
-    "A#4",
-    "A#5",
-    "A3",
-    "A4",
-    "A5",
-    "B3",
-    "B4",
-    "B5",
-    "C#3",
-    "C#4",
-    "C#5",
-    "C3",
-    "C4",
-    "C5",
-    "D#3",
-    "D#4",
-    "D#5",
-    "D3",
-    "D4",
-    "D5",
-    "E3",
-    "E4",
-    "E5",
-    "F#3",
-    "F#4",
-    "F#5",
-    "F3",
-    "F4",
-    "F5",
-    "G#3",
-    "G#4",
-    "G#5",
-    "G3",
-    "G4",
-    "G5",
-
-]
+CATEGORIES = ["A#3","A#4","A#5","A3","A4","A5",
+              "B3", "B4","B5","C#3","C#4","C#5",
+              "C3","C4","C5","D#3","D#4", "D#5",
+              "D3","D4","D5","E3","E4", "E5",
+              "F#3","F#4", "F#5","F3","F4","F5",
+              "G#3","G#4","G#5","G3","G4","G5",]
 
 def correctShape(chroma_shape):
     return chroma_shape == 130
@@ -92,6 +59,35 @@ def load_data(data_path):
 
     return X, y
 
+
+def getNotesFromChords(chord):
+    notas_string = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']	
+    nota_2 =''
+    nota_3 =''
+    octaveIndex = 2
+    secondNoteIndex = 3
+
+    if len(chord) == 2:
+        octaveIndex = 1
+        secondNoteIndex = 4
+
+	
+    nota = chord[0]
+    octava = int(chord[octaveIndex])
+    indice = notas_string.index(nota)
+    if ((indice + secondNoteIndex) / 12) >= 1 :
+        print(indice + secondNoteIndex)
+        nota_2 = notas_string[((indice + secondNoteIndex )%12)] + str(octava + 1)
+    else:
+        nota_2 = notas_string[(indice + secondNoteIndex)]  + str(octava)
+    if ((indice + 7) / 12) >= 1 :
+        nota_3 = notas_string[((indice + 7) %12)] + str(octava + 1)
+    else:
+        nota_3 = notas_string[(indice + 7)]  + str(octava)
+
+    triada = [chord, nota_2, nota_3]
+     	 	
+    return triada
     
 my_model = keras.models.load_model('modelo-acordes-v01.h5')
 
@@ -107,7 +103,8 @@ my_prediction = my_model.predict(chroma_reshape)
 print(my_prediction)
 index = np.argmax(my_prediction)
 print("chord: " + CATEGORIES[index])
-
+print("Notes from Chord")
+print(getNotesFromChords(CATEGORIES[index]))
 #plt.figure(figsize=(25, 10))
 #librosa.display.specshow(chroma, 
 #                         y_axis="chroma", 
