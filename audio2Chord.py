@@ -59,6 +59,25 @@ def load_data(data_path):
 
     return X, y
 
+def getChordFromRNN(file_path, sample_rate):
+    my_model = keras.models.load_model('modelo-acordes-v01.h5')
+
+    signal, sr = librosa.load(file_path, sr=sample_rate)
+
+    # extract Chroma
+    chroma = librosa.feature.chroma_cens(y=signal, sr=sr)
+
+    if not correctShape(chroma.shape[1]) :
+        chroma = normalizeShape(chroma)
+
+    chroma_reshape = tf.reshape(chroma, [ 1,12,130])
+    my_prediction = my_model.predict(chroma_reshape)
+   
+    index = np.argmax(my_prediction)
+    print("chord: " + CATEGORIES[index])
+
+    return CATEGORIES[index]
+
 
 def getNotesFromChords(chord):
     notas_string = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']	
@@ -89,22 +108,12 @@ def getNotesFromChords(chord):
      	 	
     return triada
     
-my_model = keras.models.load_model('modelo-acordes-v01.h5')
 
-signal, sample_rate = librosa.load(FILE_PATH, sr=SAMPLE_RATE)
-
-# extract Chroma
-chroma = librosa.feature.chroma_cens(y=signal, sr=sample_rate)
-if not correctShape(chroma.shape[1]) :
-   chroma = normalizeShape(chroma)
-
-chroma_reshape = tf.reshape(chroma, [ 1,12,130])
-my_prediction = my_model.predict(chroma_reshape)
-print(my_prediction)
-index = np.argmax(my_prediction)
-print("chord: " + CATEGORIES[index])
-print("Notes from Chord")
-print(getNotesFromChords(CATEGORIES[index]))
+if __name__ == "__main__":
+    chord = getChordFromRNN(FILE_PATH,SAMPLE_RATE)
+    print(chord)
+    print("Notes from Chord")
+    print(getNotesFromChords(chord))
 #plt.figure(figsize=(25, 10))
 #librosa.display.specshow(chroma, 
 #                         y_axis="chroma", 
