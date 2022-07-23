@@ -7,7 +7,7 @@ import librosa
 from matplotlib.pyplot import axis
 import numpy as np
 
-DATASET_PATH = "Data"
+DATASET_PATH = "C:/Users/Juanma/Desktop/ZapadAPP/Pruebas librosa/instrumentsDatasets/DataTrain"
 JSON_PATH = "data_chord.json"
 SAMPLE_RATE = 22050
 TRACK_DURATION = 3 # measured in seconds
@@ -73,7 +73,7 @@ def isWavDir(datapath):
     return False
 
 def generateLabel(datapath):
-     dir_labels = datapath.split("\\")
+     dir_labels = datapath.split("//")
      size_dir = len(dir_labels)
 
     # semantic_label = dir_labels[size_dir - 2] + "-"+ dir_labels[size_dir - 1]
