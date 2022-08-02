@@ -14,7 +14,7 @@ WORKSPACE = os.path.dirname(FILE_PATH)
 sys.path.insert(0, os.path.join(WORKSPACE, "instrumentsDataset"))
 
 
-DATASET_PATH = "C:/Users/Juanma/Desktop/ZapadAPP/Pruebas librosa/instrumentsDatasets/DataTrain"
+DATASET_PATH = "C:/Users/Juanma/Desktop/ZapadAPP/Workspace/instrumentsDatasets/ChordTrain"
 JSON_PATH = "data_chord.json"
 SAMPLE_RATE = 22050
 TRACK_DURATION = 3 # measured in seconds
@@ -55,7 +55,7 @@ def save_chroma(dataset_path, json_path, n_fft=2048, hop_length=512):
                 signal, sample_rate = librosa.load(file_path, sr=SAMPLE_RATE)
                 record = os.path.split(file_path)[1]
                 # extract Chroma
-                chroma = librosa.feature.chroma_cens(y=signal, sr=sample_rate)
+                chroma = librosa.feature.chroma_cens(y=signal, sr=sample_rate,fmin=130,n_octaves=2)
 
                 if not correctShape(chroma.shape[1]) : 
                    chroma =  normalizeShape(chroma)
@@ -77,7 +77,7 @@ def isWavDir(datapath):
     return False
 
 def generateLabel(datapath):
-     dir_labels = datapath.split("//")
+     dir_labels = datapath.split("\\")
      size_dir = len(dir_labels)
 
     # semantic_label = dir_labels[size_dir - 2] + "-"+ dir_labels[size_dir - 1]
