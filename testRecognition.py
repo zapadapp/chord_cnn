@@ -15,25 +15,23 @@ from scipy.fft import fft
 FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 WORKSPACE = os.path.dirname(FILE_PATH)
 
-sys.path.insert(0, os.path.join(WORKSPACE, "imput_parser"))
+sys.path.insert(0, os.path.join(WORKSPACE, "input_parser"))
 
 
 
-FILE_PATH = "Predict\Bb_min_5_0.wav"
+FILE_PATH = "Predict\Guitar_D4_1660590980.9196224.wav"
 DATASET_PATH = "Data"
 JSON_PATH = "data_chord.json"
 SAMPLE_RATE = 22050
 TRACK_DURATION = 3 # measured in seconds
 n_fft = 2048
 hop_length = 512
-"""CATEGORIES = ["A#3","A#4","A#5","A3","A4","A5",
-              "B3", "B4","B5","C#3","C#4","C#5",
-              "C3","C4","C5","D#3","D#4", "D#5",
-              "D3","D4","D5","E3","E4", "E5",
-              "F#3","F#4", "F#5","F3","F4","F5",
-              "G#3","G#4","G#5","G3","G4","G5",]"""
-CATEGORIES = ["A","A#","A#-","A-","B","B-","C","C#","C#-","C-","D","D#",
-              "D#-","D-","E","E-","F","F#","F#-","F-","G","G#","G#-","G-"]
+
+CATEGORIES = ["A","B","C","D","E","F","G","A","A#",
+              "A-","B","B-","C","C#","C-","D","D#",
+              "D-","E","E-","F","F#","F-","G","G#","G-"]
+
+INSTRUMENT = ["Guitar","Piano"]
 
 def correctShape(chroma_shape):
     return chroma_shape == 130
@@ -71,9 +69,9 @@ def load_data(data_path):
 
     return X, y
 
-def getChordFromRNN(signal, sample_rate):
-    my_model = keras.models.load_model('modelo-acordes-v02.h5')
-
+def getChordandInstrumentFromRNN(signal, sample_rate):
+    my_model = keras.models.load_model('modelo-acordes-v03.h5')
+    instrument = INSTRUMENT[1]
 
     # extract Chroma
     chroma = librosa.feature.chroma_cens(y=signal, sr=sample_rate,fmin=130,n_octaves=2)
@@ -85,9 +83,12 @@ def getChordFromRNN(signal, sample_rate):
     my_prediction = my_model.predict(chroma_reshape)
     print(my_prediction)
     index = np.argmax(my_prediction)
-    print("chord: " + CATEGORIES[index])
+    chord = CATEGORIES[index]
+    
+    if index < 7 :
+        instrument = INSTRUMENT[0]
 
-    return CATEGORIES[index]
+    return instrument, chord
 
 
 def getNotesFromChords(chord,signal,sr):
@@ -164,7 +165,10 @@ def convertToNote(val) :
 if __name__ == "__main__":
     
     signal, sr = librosa.load(FILE_PATH)
-    chord = getChordFromRNN(signal,sr)
-    print(chord)
-    print("Notes from Chord")
+    instrument, chord = getChordandInstrumentFromRNN(signal,sr)
+    print("TESTING PREDICTION COME HERE\n")
+    print("The instrument is {}\n".format(instrument))
+    print("The chord is {}\n".format(chord))
+    print("And the notes from Chord\n")
     print(getNotesFromChords(chord,signal,sr))
+    print("PLEASE FOLLOW WITH THE TEST! \n")
