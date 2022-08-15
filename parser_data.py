@@ -2,7 +2,6 @@ import json
 import os
 import sys 
 from tkinter.ttk import LabeledScale
-from attr import s
 import librosa
 from matplotlib.pyplot import axis
 import numpy as np
@@ -54,6 +53,8 @@ def save_chroma(dataset_path, json_path, n_fft=2048, hop_length=512):
                 file_path = os.path.join(dirpath, f)
                 signal, sample_rate = librosa.load(file_path, sr=SAMPLE_RATE)
                 record = os.path.split(file_path)[1]
+                #onSet Detect Here
+                
                 # extract Chroma
                 chroma = librosa.feature.chroma_cens(y=signal, sr=sample_rate,fmin=130,n_octaves=2)
 
@@ -81,7 +82,7 @@ def generateLabel(datapath):
      size_dir = len(dir_labels)
 
     # semantic_label = dir_labels[size_dir - 2] + "-"+ dir_labels[size_dir - 1]
-     semantic_label = dir_labels[size_dir - 1]
+     semantic_label = dir_labels[size_dir -2 ] + "-" + dir_labels[size_dir - 1]
     
      return semantic_label
 
