@@ -79,7 +79,7 @@ if __name__ == "__main__":
         keras.layers.Dropout(0.3),
 
         # output layer
-        keras.layers.Dense(26, activation='softmax')
+        keras.layers.Dense(38, activation='softmax')
     ])
 
     # compile model
@@ -98,5 +98,5 @@ if __name__ == "__main__":
     plot_history(history)
 
     #save the model
-    model.save('modelo-acordes-v03.h5')
+    model.save('modelo-acordes-v05.h5')
     
