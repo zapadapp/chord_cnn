@@ -1,4 +1,5 @@
 from array import ArrayType
+from itertools import count
 import keras
 import librosa
 import librosa.display 
@@ -11,15 +12,26 @@ import os
 import sys 
 from scipy.signal import find_peaks
 from scipy.fft import fft
+import time 
+import pyaudio
+import webrtcvad
+import pyaudio
+import wave
+import os
+from warnings import simplefilter
+import time
+
+
 
 FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 WORKSPACE = os.path.dirname(FILE_PATH)
-
+MY_MODEL = keras.models.load_model('modelo-acordes-v04.h5')
 sys.path.insert(0, os.path.join(WORKSPACE, "input_parser"))
 
 
 
-FILE_PATH = "Predict\Guitar_D4_1660590980.9196224.wav"
+FILE_PATH = "Predict\Guitar_E4_1660870899.388045.wav"
+ROOT_PATH = "Predict"
 DATASET_PATH = "Data"
 JSON_PATH = "data_chord.json"
 SAMPLE_RATE = 22050
@@ -27,9 +39,11 @@ TRACK_DURATION = 3 # measured in seconds
 n_fft = 2048
 hop_length = 512
 
-CATEGORIES = ["A","B","C","D","E","F","G","A","A#",
-              "A-","B","B-","C","C#","C-","D","D#",
-              "D-","E","E-","F","F#","F-","G","G#","G-"]
+CATEGORIES = ["A","A-","B","B-","C", "C-","D", "D-","E","E-",
+              "F","F-","G","G-",
+              "A","A#","A#-","A-","B","B-","C","C#","C#-","C-",
+              "D","D#","D#-","D-","E","E-","F","F#","F#-","F-",
+              "G","G#","G#-","G-"]
 
 INSTRUMENT = ["Guitar","Piano"]
 
@@ -51,26 +65,31 @@ def normalizeShape(chroma_mat):
         i = i +1 
     return chroma_mat
 
-def load_data(data_path):
-    """Loads training dataset from json file.
-        :param data_path (str): Path to json file containing data
-        :return X (ndarray): Inputs
-        :return y (ndarray): Targets
-    """
-
-    with open(data_path, "r") as fp:
-        data = json.load(fp)
-
-    # convert lists to numpy arrays
-    X = np.array(data["chroma"])
-    y = np.array(data["labels"])
-
-    print("Data succesfully loaded!")
-
-    return X, y
+def checkBach(testing_path, chord, instrument):
+    test_instrument = "init"
+    test_chord = "init"
+    count = 0
+    success = 0
+    for i, (dirpath, dirnames, filenames) in enumerate(os.walk(testing_path)):
+     
+        for f in filenames:
+		# load audio file
+            file_path = os.path.join(dirpath, f)
+            signal, sr = librosa.load(file_path)
+            test_instrument, test_chord = getChordandInstrumentFromRNN(signal,sr)
+            if test_instrument == instrument and test_chord == chord:
+                success = success +1
+            count = count + 1 
+    print("****RESUME****\n")
+    print("Chord Selected: {}\n".format(chord))
+    print("Instrument Selected: {}\n".format(instrument))
+    print("Total in Bach: {}\n".format(count))
+    print("Total test success: {}\n".format(success))
+    print("%\Accuracy: {}%\n".format(success*100/count))
+    return
 
 def getChordandInstrumentFromRNN(signal, sample_rate):
-    my_model = keras.models.load_model('modelo-acordes-v03.h5')
+    
     instrument = INSTRUMENT[1]
 
     # extract Chroma
@@ -80,14 +99,16 @@ def getChordandInstrumentFromRNN(signal, sample_rate):
         chroma = normalizeShape(chroma)
 
     chroma_reshape = tf.reshape(chroma, [ 1,12,130])
-    my_prediction = my_model.predict(chroma_reshape)
-    print(my_prediction)
+    my_prediction = MY_MODEL.predict(chroma_reshape)
+    #print(my_prediction)
     index = np.argmax(my_prediction)
     chord = CATEGORIES[index]
     
-    if index < 7 :
+    if index < 14 :
         instrument = INSTRUMENT[0]
-
+    print("Instrument {}\n".format( instrument))
+    print("Chord {}\n".format( chord))
+    
     return instrument, chord
 
 
@@ -162,13 +183,73 @@ def convertToNote(val) :
 
     return nota
 
+def largeAudioWithOnset(FILE_PATH,chord,instrument):
+      
+    y, sr = librosa.load(FILE_PATH)
+    ok_test = 0
+    audio_onsets = 0
+    test_instrument = ""
+    test_chord = ""
+
+    onset_frames = librosa.onset.onset_detect(y, sr=sr, wait=1, pre_avg=1, post_avg=1, pre_max=1, post_max=1)
+    samples = librosa.frames_to_samples(onset_frames)
+
+    # filter lower samples
+    filteredSamples = filterLowSamples(samples)
+
+    # get indexes of all samples in the numpy array
+    indexes = np.where(filteredSamples>0)
+
+    length = len(indexes[0])
+    print("len samples {}".format(length))
+    j = 0
+ 
+    for i in indexes[0]:
+        j = i
+        if j < length-1:
+            test_instrument, test_chord = getChordandInstrumentFromRNN(y[filteredSamples[j]:filteredSamples[j+1]],sr)    
+        elif j == length-1:
+            test_instrument, test_chord = getChordandInstrumentFromRNN(y[filteredSamples[j]:],sr)
+        if test_instrument == instrument and test_chord == chord : 
+           ok_test = ok_test + 1
+        audio_onsets = audio_onsets + 1
+    print("****RESUME****\n")
+    print("Chord Selected: {}\n".format(chord))
+    print("Instrument Selected: {}\n".format(instrument))
+    print("Total Onsets: {}\n".format(audio_onsets))
+    print("Total test success: {}\n".format(ok_test))
+    print("%\Accuracy: {}%\n".format(ok_test*100/audio_onsets))
+
+
+
+## Function that filters lower samples generated by input noise.
+def filterLowSamples(samples):
+    # find indexes of all elements lower than 2000 from samples
+    indexes = np.where(samples < 2000)
+    # remove elements for given indexes
+    return np.delete(samples, indexes)
+
+
+    
 if __name__ == "__main__":
     
-    signal, sr = librosa.load(FILE_PATH)
-    instrument, chord = getChordandInstrumentFromRNN(signal,sr)
-    print("TESTING PREDICTION COME HERE\n")
-    print("The instrument is {}\n".format(instrument))
-    print("The chord is {}\n".format(chord))
-    print("And the notes from Chord\n")
-    print(getNotesFromChords(chord,signal,sr))
-    print("PLEASE FOLLOW WITH THE TEST! \n")
+    print("***WELCOME***")
+    instrumentIndex = input("\nSelect a test:\n[0] - Batch\n[1] - Only One\n[2] - Onset\n[3] - Exit:\n>:")
+    match instrumentIndex:
+        case "0":
+            checkBach(FILE_PATH,"A","Guitar")    
+        case "1": 
+            signal, sr = librosa.load(FILE_PATH)
+            instrument, chord = getChordandInstrumentFromRNN(signal,sr)
+            print("TESTING PREDICTION COME HERE\n")
+            print("The instrument is {}\n".format(instrument))
+            print("The chord is {}\n".format(chord))
+            print("And the notes from Chord\n")
+            print(getNotesFromChords(chord,signal,sr))
+            print("PLEASE FOLLOW WITH THE TEST! \n")
+        case "2":
+            largeAudioWithOnset(FILE_PATH,"E","Guitar")
+        case "3":
+            print("See you\n")
+            quit()
+

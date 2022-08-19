@@ -20,56 +20,7 @@ TRACK_DURATION = 3 # measured in seconds
 SAMPLES_PER_TRACK = SAMPLE_RATE * TRACK_DURATION
 
 
-def save_chroma(dataset_path, json_path, n_fft=2048, hop_length=512):
-    """Extracts Chroma from music dataset and saves them into a json file along witgh Instruments labels.
-        :param dataset_path (str): Path to dataset
-        :param json_path (str): Path to json file used to save CHROMA
-        :param n_fft (int): Interval we consider to apply FFT. Measured in # of samples
-        :param hop_length (int): Sliding window for FFT. Measured in # of samples
-        :return:
-        """
-    # dictionary to store mapping, labels, and Mel spectrogram
-    data = {
-        "mapping": [],
-        "labels": [],
-        "chroma": []
-    }
-    count_label = 0 
 
-    for i, (dirpath, dirnames, filenames) in enumerate(os.walk(dataset_path)):
-
-        # ensure we're processing a chord sub-folder level
-        if dirpath is not dataset_path and isWavDir(dirpath):
-
-            #genero el label.
-            label = generateLabel(dirpath)
-            data["mapping"].append(label)
-            print("\nProcessing: {}\nLabel Assign: {}\n".format(label, count_label))
-
-            # process all audio files in chord sub-dir
-            for f in filenames:
-
-		# load audio file
-                file_path = os.path.join(dirpath, f)
-                signal, sample_rate = librosa.load(file_path, sr=SAMPLE_RATE)
-                record = os.path.split(file_path)[1]
-                #onSet Detect Here
-                
-                # extract Chroma
-                chroma = librosa.feature.chroma_cens(y=signal, sr=sample_rate,fmin=130,n_octaves=2)
-
-                if not correctShape(chroma.shape[1]) : 
-                   chroma =  normalizeShape(chroma)
-
-                data["chroma"].append(chroma.tolist())
-                data["labels"].append(count_label)
-                print("{}, file:{} shape:{}".format(label, record,chroma.shape))
-            count_label = count_label + 1 
-
-    # save CHROMA to json file
-    with open(json_path, "w") as fp:
-        json.dump(data, fp, indent=4)
-        
 def isWavDir(datapath):
     list_dir = os.listdir(datapath)
     for x in list_dir:
@@ -103,6 +54,87 @@ def normalizeShape(chroma_mat):
         chroma_mat= np.column_stack((chroma_mat,arreglo))  
         i = i +1 
     return chroma_mat
+
+def save_chroma(dataset_path, json_path):
+    
+    data = {
+        "mapping": [],
+        "labels": [],
+        "chroma": []
+    }
+    count_label = 0 
+
+    for i, (dirpath, dirnames, filenames) in enumerate(os.walk(dataset_path)):
+
+        # ensure we're processing a chord sub-folder level
+        if dirpath is not dataset_path and isWavDir(dirpath):
+            #genero el label.
+            label = generateLabel(dirpath)
+            data["mapping"].append(label)
+		    
+            print("\nProcessing: {}\nLabel Assign: {}\n".format(label, count_label))
+		
+            # process all audio files in chord sub-dir
+            for f in filenames:
+
+		        # load audio file
+                file_path = os.path.join(dirpath, f)
+                signal, sample_rate = librosa.load(file_path, sr=SAMPLE_RATE)
+                duration = librosa.get_duration(y=signal, sr= sample_rate)
+                record = os.path.split(file_path)[1]
+                #onSet Detect Here
+                if duration > 3.0:
+                    onset_frames = librosa.onset.onset_detect(y=signal, sr=sample_rate, wait=1, pre_avg=1, post_avg=1, pre_max=1, post_max=1)
+
+                    samples = librosa.frames_to_samples(onset_frames)
+    			    # filter lower samples
+                    
+                    filteredSamples = filterLowSamples(samples)
+   			        # get indexes of all samples in the numpy array
+                    indexes = np.where(filteredSamples>0)
+                    length = len(indexes[0])
+                    print("len samples {}".format(length))
+                    j = 0
+
+                    for i in indexes[0]:
+                        j = i
+                        if j < length-1:
+                            onset_signal = signal[filteredSamples[j]:filteredSamples[j+1]]
+                        elif j == length-1:
+                            onset_signal = signal[filteredSamples[j]:]
+
+                        chroma = librosa.feature.chroma_cens(y=onset_signal, sr=sample_rate,fmin=130,n_octaves=2)
+				
+                        if not correctShape(chroma.shape[1]) : 
+                            chroma =  normalizeShape(chroma)
+
+                        data["chroma"].append(chroma.tolist())
+                        data["labels"].append(count_label)
+                        print("{}, file:{} shape:{}".format(label, record,chroma.shape))
+	    
+                else:
+               	# extract Chroma
+               	    chroma = librosa.feature.chroma_cens(y=signal, sr=sample_rate,fmin=130,n_octaves=2)
+                    if not correctShape(chroma.shape[1]):    
+                        chroma =  normalizeShape(chroma)
+
+                    data["chroma"].append(chroma.tolist())
+                    data["labels"].append(count_label)
+                    print("{}, file:{} shape:{}".format(label, record,chroma.shape))
+            count_label = count_label + 1 
+
+    # save CHROMA to json file
+    with open(json_path, "w") as fp:
+        json.dump(data, fp, indent=4)
+
+
+## Function that filters lower samples generated by input noise.
+def filterLowSamples(samples):
+    # find indexes of all elements lower than 2000 from samples
+    indexes = np.where(samples < 2000)
+    # remove elements for given indexes
+    return np.delete(samples, indexes)
+
 
 if __name__ == "__main__":
     save_chroma(DATASET_PATH, JSON_PATH)
