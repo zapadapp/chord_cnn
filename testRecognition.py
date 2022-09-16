@@ -30,7 +30,7 @@ sys.path.insert(0, os.path.join(WORKSPACE, "input_parser"))
 
 
 
-FILE_PATH = "Predict\Guitar_G4_1660420299.4218757.wav"
+FILE_PATH = "Predict\Guitar_C4_1661520264.6838367.wav"
 ROOT_PATH = "Predict"
 DATASET_PATH = "Data"
 JSON_PATH = "data_chord.json"
