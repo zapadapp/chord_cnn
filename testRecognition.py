@@ -30,7 +30,7 @@ sys.path.insert(0, os.path.join(WORKSPACE, "input_parser"))
 
 
 
-FILE_PATH = "Predict\Guitar_C4_1663017378.7476363.wav"
+FILE_PATH = "Predict\Piano_G4_1660964723.4351504.wav"
 ROOT_PATH = "Predict"
 DATASET_PATH = "Data"
 JSON_PATH = "data_chord.json"
@@ -39,11 +39,11 @@ TRACK_DURATION = 3 # measured in seconds
 n_fft = 2048
 hop_length = 512
 
-CATEGORIES = ["A","A-","B","B-","C", "C-","D", "D-","E","E-",
-              "F","F-","G","G-",
-              "A","A#","A#-","A-","B","B-","C","C#","C#-","C-",
-              "D","D#","D#-","D-","E","E-","F","F#","F#-","F-",
-              "G","G#","G#-","G-"]
+CATEGORIES = ["A","A-","A#","B","B-","C", "C-","C#","D","D-","D#","D#-","E","E-",
+              "F","F-","F#","F#-","G","G-","G#","G#-",
+              "A","A-","A#","A#-","B","B-","C","C-","C#","C#-",
+              "D","D-","D#","D#-","E","E-","F","F-","F#","F#-",
+              "G","G-","G#","G#-"]
 
 INSTRUMENT = ["Guitar","Piano"]
 NOTE_STRINGS = ["E2","A2","D3","G3","B3","E4"]
@@ -109,7 +109,7 @@ def getChordandInstrumentFromRNN(signal, sample_rate):
             index = np.argmax(my_prediction)
             chord = CATEGORIES[index]
     
-            if index < 14 :
+            if index < 22 :
                 instrument = INSTRUMENT[0]
             print("Instrument {}\n".format( instrument))
             print("Chord {}\n".format( chord))
