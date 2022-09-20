@@ -30,7 +30,7 @@ sys.path.insert(0, os.path.join(WORKSPACE, "input_parser"))
 
 
 
-FILE_PATH = "Predict\Guitar_A_1663348525.231134.wav"
+FILE_PATH = "Predict\Guitar_C4_1663017378.7476363.wav"
 ROOT_PATH = "Predict"
 DATASET_PATH = "Data"
 JSON_PATH = "data_chord.json"
@@ -95,25 +95,26 @@ def getChordandInstrumentFromRNN(signal, sample_rate):
     
     instrument = INSTRUMENT[1]
     chord = "non_chord"
+    index = 0 
     if len(signal) > 0 :
     # extract Chroma
         chroma = librosa.feature.chroma_cens(y=signal, sr=sample_rate,fmin=130,n_octaves=2)
 
         if not correctShape(chroma.shape[1]) :
             chroma = normalizeShape(chroma)
-
-        chroma_reshape = tf.reshape(chroma, [ 1,12,130])
-        my_prediction = MY_MODEL.predict(chroma_reshape)
-        #print(my_prediction)
-        index = np.argmax(my_prediction)
-        chord = CATEGORIES[index]
+        if correctShape(chroma.shape[1]):
+            chroma_reshape = tf.reshape(chroma, [ 1,12,130])
+            my_prediction = MY_MODEL.predict(chroma_reshape)
+            #print(my_prediction)
+            index = np.argmax(my_prediction)
+            chord = CATEGORIES[index]
     
-        if index < 14 :
-            instrument = INSTRUMENT[0]
-        print("Instrument {}\n".format( instrument))
-        print("Chord {}\n".format( chord))
-        if instrument == "Guitar":
-            print(getNotesFromGuitar(signal,sample_rate,chord))
+            if index < 14 :
+                instrument = INSTRUMENT[0]
+            print("Instrument {}\n".format( instrument))
+            print("Chord {}\n".format( chord))
+            if instrument == "Guitar":
+                print(getNotesFromGuitar(signal,sample_rate,chord))
     
     return instrument, chord
 
@@ -200,8 +201,7 @@ def largeAudioWithOnset(FILE_PATH,chord,instrument):
     ok_test_chord = 0
     ok_test_instrument = 0
     rms_value = librosa.feature.rms(y=y)
-    onset_frames = librosa.onset.onset_detect(y, sr=sr, wait=1, pre_avg=1, post_avg=1, pre_max=1, post_max=1)
-    onset_bt_rms = librosa.onset.onset_backtrack(onset_frames, rms_value[0])
+    onset_frames = librosa.onset.onset_detect(y, sr=sr, wait=30, pre_avg=20, post_avg=20, pre_max=25, post_max=25)
     samples = librosa.frames_to_samples(onset_frames)
 
     # filter lower samples
