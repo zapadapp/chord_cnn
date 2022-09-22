@@ -88,7 +88,7 @@ def save_chroma(dataset_path, json_path):
                 record = os.path.split(file_path)[1]
                 #onSet Detect Here
                 if duration > 3.0:
-                    onset_frames = librosa.onset.onset_detect(y=signal, sr=sample_rate, wait=10, pre_avg=20, post_avg=20, pre_max=20, post_max=20)
+                    onset_frames = librosa.onset.onset_detect(y=signal, sr=sample_rate, wait=20, pre_avg=20, post_avg=20, pre_max=20, post_max=20)
 
                     samples = librosa.frames_to_samples(onset_frames)
     			    # filter lower samples

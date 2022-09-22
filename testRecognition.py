@@ -25,7 +25,7 @@ import time
 
 FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 WORKSPACE = os.path.dirname(FILE_PATH)
-MY_MODEL = keras.models.load_model('modelo-acordes-v05.h5')
+MY_MODEL = keras.models.load_model('modelo-acordesv06.h5')
 sys.path.insert(0, os.path.join(WORKSPACE, "input_parser"))
 
 
@@ -38,12 +38,14 @@ SAMPLE_RATE = 22050
 TRACK_DURATION = 3 # measured in seconds
 n_fft = 2048
 hop_length = 512
+SHAPE = 130
 
-CATEGORIES = ["A","A-","A#","B","B-","C", "C-","C#","D","D-","D#","D#-","E","E-",
-              "F","F-","F#","F#-","G","G-","G#","G#-",
-              "A","A-","A#","A#-","B","B-","C","C-","C#","C#-",
-              "D","D-","D#","D#-","E","E-","F","F-","F#","F#-",
-              "G","G-","G#","G#-"]
+CATEGORIES = ["A","A#","A#-","A-","B","B-","C","C#", 
+              "C#-","C-","D","D#","D#-","D-","E","E-",
+              "F","F#","F#-","F-","G#","G#-","G","G-",
+              "A","A#","A#-","A-","B","B-","C","C#", 
+              "C#-","C-","D","D#","D#-","D-","E","E-",
+              "F","F#","F#-","F-","G","G#","G#-","G-"]
 
 INSTRUMENT = ["Guitar","Piano"]
 NOTE_STRINGS = ["E2","A2","D3","G3","B3","E4"]
@@ -58,15 +60,19 @@ def normalizeShape(chroma_mat):
     #init_shape tiene la dimension de columnas. 
     init_shape= chroma_mat.shape[1]
     #Me fijo cuantas columnas faltan por rellenar
-    nums = 130 - init_shape
+    nums = SHAPE - init_shape
     #itero nums copiando el anterior
     arreglo = np.array(chroma_mat[:,init_shape-1])
    
     i = 0
-    while i < nums :
-        chroma_mat= np.column_stack((chroma_mat,arreglo))  
-        i = i +1 
+    if nums > 0 :
+        while i < nums :
+            chroma_mat= np.column_stack((chroma_mat,arreglo))  
+            i = i +1 
+    else:
+        chroma_mat = np.array(chroma_mat[:,: SHAPE])
     return chroma_mat
+
 
 def checkBach(testing_path, chord, instrument):
     test_instrument = "init"
@@ -387,11 +393,35 @@ if __name__ == "__main__":
         case _:
             print("Please don't be retarded")
             quit()
+    sustainIndex = input("\sustain:\n[1] - YES\n[2] - NO\n[->]:>")
 
-    instrumentIndex = input("\nSelect a test:\n[0] - Batch\n[1] - Only One\n[2] - Onset\n[3] - Exit:\n>:")
+    match sustainIndex:
+        case "1":
+            note = note + '#'
+        case "2": 
+            note = note
+
+    minorIndex = input("\nminor:\n[1] - YES\n[2] - NO\n[->]:>")
+
+    
+    match minorIndex:
+        case "1":
+            note = note + "-"
+        case "2": 
+            note = note
+   
+    instrumentIndex = input("\Instrument:\n[1] - GUITAR\n[2] - PIANO\n[->]:>")
+    instrument = "Guitar"
     match instrumentIndex:
+        case "1":
+            instrument = "Guitar"
+        case "2": 
+            instrument = "Piano"
+
+    testIndex = input("\nSelect a test:\n[0] - Batch\n[1] - Only One\n[2] - Onset\n[3] - Exit:\n>:")
+    match testIndex:
         case "0":
-            checkBach(FILE_PATH,note,"Guitar")    
+            checkBach(FILE_PATH,note,instrument)    
         case "1": 
             signal, sr = librosa.load(FILE_PATH)
             instrument, chord = getChordandInstrumentFromRNN(signal,sr)

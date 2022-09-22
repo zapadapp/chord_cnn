@@ -79,7 +79,7 @@ if __name__ == "__main__":
         keras.layers.Dropout(0.3),
 
         # output layer
-        keras.layers.Dense(57, activation='softmax')
+        keras.layers.Dense(48, activation='softmax')
     ])
 
     # compile model
@@ -93,10 +93,10 @@ if __name__ == "__main__":
     
     # train model
     history = model.fit(X_train, y_train, validation_data=(X_test, y_test), batch_size=32, epochs=80)
-
+    #save the model
+    model.save('modelo-acordesV06.h5')
     # plot accuracy and error as a function of the epochs
     plot_history(history)
 
-    #save the model
-    model.save('modelo-acordes-v05.h5')
+
     
