@@ -20,8 +20,7 @@ import wave
 import os
 from warnings import simplefilter
 import time
-
-
+import soundfile as sf
 
 FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 WORKSPACE = os.path.dirname(FILE_PATH)
@@ -30,7 +29,7 @@ sys.path.insert(0, os.path.join(WORKSPACE, "input_parser"))
 
 
 
-FILE_PATH = "Predict\Piano_G4_1660964723.4351504.wav"
+FILE_PATH = "Predict\Piano_B3_1658502790.1721418.wav"
 ROOT_PATH = "Predict"
 DATASET_PATH = "Data"
 JSON_PATH = "data_chord.json"
@@ -42,7 +41,7 @@ SHAPE = 130
 
 CATEGORIES = ["A","A#","A#-","A-","B","B-","C","C#", 
               "C#-","C-","D","D#","D#-","D-","E","E-",
-              "F","F#","F#-","F-","G#","G#-","G","G-",
+              "F","F#","F#-","F-","G","G#","G#-","G-",
               "A","A#","A#-","A-","B","B-","C","C#", 
               "C#-","C-","D","D#","D#-","D-","E","E-",
               "F","F#","F#-","F-","G","G#","G#-","G-"]
@@ -117,8 +116,9 @@ def getChordandInstrumentFromRNN(signal, sample_rate):
     
             if index < 22 :
                 instrument = INSTRUMENT[0]
-            print("Instrument {}\n".format( instrument))
-            print("Chord {}\n".format( chord))
+            print("Instrument: {}\n".format( instrument))
+            print("Chord: {}\n".format( chord))
+            print("Octave: {}\n".format(getOctaveFromFundamental(signal,sample_rate)))
             if instrument == "Guitar":
                 print(getNotesFromGuitar(signal,sample_rate,chord))
     
@@ -131,7 +131,7 @@ def getNotesFromChords(chord,signal,sr):
    # octaveIndex = 2
     secondNoteIndex = 4
     #octava = getOctaveFromChord(signal,sr)
-    octava = 4
+    octava = getOctaveFromFundamental(signal,sr)
     
     if '-' in chord :
       secondNoteIndex = 3
@@ -159,6 +159,37 @@ def getNotesFromChords(chord,signal,sr):
      	 	
     return triada
     
+
+#Estimate octave from fundamental frecuency
+def getOctaveFromFundamental(signal, sample_rate):
+    octava = 4
+    X = fft(signal)
+    X_mag = np.absolute(X)
+
+    # generate x values (frequencies)
+    f = np.linspace(0, sample_rate, len(X_mag))
+    f_bins = int(len(X_mag)*0.1) 
+    
+
+    # find peaks in Y values. Use height value to filter lower peaks
+    _, properties = find_peaks(X_mag, height=100)
+    if len(properties['peak_heights']) > 0:
+        peak_sel = np.where(X_mag[:f_bins] == properties['peak_heights'][0])
+        frec = f[peak_sel[0]]
+    else:
+        frec = 1001
+
+    if frec < 130 :
+        octava = 2
+    elif frec >= 130 and frec < 250 :
+        octava = 3
+    elif frec >= 250 and frec < 530 :
+        octava = 4
+    elif frec >=523 and frec < 1000 :
+        octava = 5
+    print (frec)
+    return octava
+
 def getOctaveFromChord(signal, sample_rate):
      # calculate FFT and absolute values
 
@@ -206,8 +237,10 @@ def largeAudioWithOnset(FILE_PATH,chord,instrument):
     test_chord = ""
     ok_test_chord = 0
     ok_test_instrument = 0
-    rms_value = librosa.feature.rms(y=y)
-    onset_frames = librosa.onset.onset_detect(y, sr=sr, wait=30, pre_avg=20, post_avg=20, pre_max=25, post_max=25)
+    tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
+
+    print("La cantidad de beats es: {}".format(len(beats)))
+    onset_frames = librosa.onset.onset_detect(y, sr=sr, wait=10, pre_avg=10, post_avg=10, pre_max=30, post_max=30)
     samples = librosa.frames_to_samples(onset_frames)
 
     # filter lower samples
@@ -242,6 +275,87 @@ def largeAudioWithOnset(FILE_PATH,chord,instrument):
     print("Total test instrument success: {}\n".format(ok_test_instrument))
     print("%\Accuracy: {}%\n".format(ok_test*100/audio_onsets))
 
+
+def testSong(testing_path,notes,instrument):
+    y, sr = librosa.load(testing_path)
+    ok_test = 0
+    audio_onsets = 0
+    test_instrument = ""
+    test_note = ""
+    ok_test_note = 0
+    ok_test_instrument = 0
+    ONSET_PARAM = 20
+    tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
+    print("La cantidad de beats es: {}".format(len(beats)))
+    duration = librosa.get_duration(y=y, sr= sr)
+  
+    velocity_audio = 60*len(beats)/duration
+    
+    if velocity_audio > 40 and velocity_audio <= 80 :
+        ONSET_PARAM = 10
+    elif velocity_audio > 80 and velocity_audio <= 100:
+        ONSET_PARAM = 7
+    elif velocity_audio > 100:
+        ONSET_PARAM = 5
+    print("la velocidad del audio es: {}".format(velocity_audio))
+    onset_env = librosa.onset.onset_strength(y=y, sr=sr, max_size=5)
+    onset_frames = librosa.onset.onset_detect(onset_envelope=onset_env,backtrack=True, normalize =True,wait=ONSET_PARAM, pre_avg=ONSET_PARAM, post_avg=ONSET_PARAM, pre_max=ONSET_PARAM, post_max=ONSET_PARAM)
+
+    samples = librosa.frames_to_samples(onset_frames)
+
+    # filter lower samples
+    filteredSamples = filterLowSamples(samples)
+
+    # get indexes of all samples in the numpy array
+    indexes = np.where(filteredSamples>0)
+
+    length = len(indexes[0])
+    print("len samples {}".format(length))
+    print("ONSET PARAMS: {}".format(ONSET_PARAM))
+    j = 0
+    onset_times = librosa.frames_to_time(onset_frames)
+    print("Onset times: {}".format(onset_times))
+    print("Len onset times: {}".format(len(onset_times)))
+    print("Time difs:")
+
+    for i in range(len(onset_times)):
+        if i == len(onset_times)-1:
+            continue
+        print("X{} - X{} = {}".format(i+1,i,onset_times[i+1]-onset_times[i]))
+    h = 0
+    for i in indexes[0]:
+        j = i
+        if j < length-1:
+            data = y[filteredSamples[j]:filteredSamples[j+1]]    
+        elif j == length-1:
+            data = y[filteredSamples[j]:]
+        
+        test_instrument, test_note = getChordandInstrumentFromRNN(data,sr)
+        if test_instrument == instrument : 
+            ok_test_instrument = ok_test_instrument + 1
+        if  test_note == notes[h]:
+            ok_test_note = ok_test_note + 1          
+        sf.write("{}_{}_{}_{}".format(instrument,notes[h],time.time(),".wav"),data, sr)
+        audio_onsets = audio_onsets + 1
+        h = h + 1
+    ok_test = ok_test_note
+    accuracy = ((ok_test_note  + ok_test_instrument)/2)/audio_onsets
+    
+    print("****RESUME****\n")
+    print("Note Selected: {}\n".format(note))
+    print("Instrument Selected: {}\n".format(instrument))
+    print("Total Onsets: {}\n".format(audio_onsets))
+    print("Total test notes success: {}\n".format(ok_test_note))
+    print("Total test instrument success: {}\n".format(ok_test_instrument))
+    print("%\Accuracy: {}%\n".format(ok_test*100/audio_onsets))
+    S = librosa.stft(y)
+    logS = librosa.amplitude_to_db(abs(S))
+    plt.figure(figsize=(14, 5))
+    librosa.display.waveshow(y, sr=sr)
+    plt.vlines(onset_times, -0.8, 0.79, color='r', alpha=0.8) 
+
+    plt.show()
+    return
 ## Function that filters lower samples generated by input noise.
 def filterLowSamples(samples):
     # find indexes of all elements lower than 2000 from samples
@@ -410,37 +524,46 @@ if __name__ == "__main__":
         case "2": 
             note = note
    
-    instrumentIndex = input("\Instrument:\n[1] - GUITAR\n[2] - PIANO\n[->]:>")
-    instrument = "Guitar"
+    instrumentIndex = input("Instrument:\n[1] - GUITAR\n[2] - PIANO\n[->]:>")
+   # instrument = "Guitar"
+   
     match instrumentIndex:
         case "1":
             instrument = "Guitar"
         case "2": 
             instrument = "Piano"
 
-    testIndex = input("\nSelect a test:\n[0] - Batch\n[1] - Only One\n[2] - Onset\n[3] - Exit:\n>:")
+    testIndex = input("\nSelect a test:\n[0] - Batch\n[1] - Only One\n[2] - Onset\n[3] - Test song\n [4] - Exit:\n>:")
     match testIndex:
         case "0":
             checkBach(FILE_PATH,note,instrument)    
         case "1": 
             signal, sr = librosa.load(FILE_PATH)
-            instrument, chord = getChordandInstrumentFromRNN(signal,sr)
+            instrumento, chord = getChordandInstrumentFromRNN(signal,sr)
             notes = []
             print("TESTING PREDICTION COME HERE\n")
             print("The instrument is {}\n".format(instrument))
             print("The chord is {}\n".format(chord))
+            print("The octave is {}\n".format(getOctaveFromFundamental(signal,sr)))
             print("And the notes from Chord\n")
             if instrument == INSTRUMENT[1]:
                 print(getNotesFromChords(chord,signal,sr))
             else:
                 notes = getNotesFromGuitar(signal,sr,chord)
                 print(notes)
+                #print("FINALLY, THE TABLATURE :o\n")
+                print(setTablature(notes))
             print("PLEASE FOLLOW WITH THE TEST! \n")
-            print("FINALLY, THE TABLATURE :o\n")
-            print(setTablature(notes))
+
         case "2":
-            largeAudioWithOnset(FILE_PATH,note,"Guitar")
+            largeAudioWithOnset(FILE_PATH,note,instrument)
         case "3":
+            note_song =["G","G","D","D","D","D","G","G","C","C",
+                        "G","G","D","D","G"]
+            testSong(FILE_PATH,note_song,instrument)
+            print("See you\n")
+            quit()
+        case "4":
             print("See you\n")
             quit()
 

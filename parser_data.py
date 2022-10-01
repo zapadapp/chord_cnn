@@ -88,7 +88,18 @@ def save_chroma(dataset_path, json_path):
                 record = os.path.split(file_path)[1]
                 #onSet Detect Here
                 if duration > 3.0:
-                    onset_frames = librosa.onset.onset_detect(y=signal, sr=sample_rate, wait=20, pre_avg=20, post_avg=20, pre_max=20, post_max=20)
+                    ONSET_PARAM = 20
+                    tempo, beats = librosa.beat.beat_track(y=signal, sr=SAMPLE_RATE)
+                   
+                    velocity_audio = 60*len(beats)/duration
+
+                    if velocity_audio > 40 and velocity_audio <= 80 :
+                        ONSET_PARAM = 10
+                    elif velocity_audio > 80 and velocity_audio <= 100:
+                        ONSET_PARAM = 7
+                    elif velocity_audio > 100:
+                        ONSET_PARAM = 5
+                    onset_frames = librosa.onset.onset_detect(y=signal, sr=sample_rate, normalize= True, wait=ONSET_PARAM, pre_avg=ONSET_PARAM, post_avg=ONSET_PARAM, pre_max=ONSET_PARAM, post_max=ONSET_PARAM)
 
                     samples = librosa.frames_to_samples(onset_frames)
     			    # filter lower samples

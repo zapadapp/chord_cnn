@@ -90,12 +90,12 @@ if __name__ == "__main__":
 
     model.summary()
     #print X_train Y_train
-    
+    #save the model
+    model.save('modelo-acordesVTesting.h5')
     # train model
     history = model.fit(X_train, y_train, validation_data=(X_test, y_test), batch_size=32, epochs=80)
-    #save the model
-    model.save('modelo-acordesV06.h5')
-    # plot accuracy and error as a function of the epochs
+  
+    # plot accuracy and error as a function sof the epochs
     plot_history(history)
 
 
